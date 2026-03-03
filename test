@@ -1,0 +1,1 @@
+print("SCRIPT LOADED")
