@@ -354,4 +354,5 @@ task.spawn(function()
             if pet then root.CFrame = pet:GetPivot() + Vector3.new(0,5,0) end
         end
     end
+
 end)
