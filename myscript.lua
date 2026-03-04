@@ -325,7 +325,7 @@ task.spawn(function()
         local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not root then continue end
 
-        if autoMode2K or autoModeAll then
+        if autoMode3K or autoModeAll then
             if os.clock() - lastAreaSwitch >= 60 then
                 lastAreaSwitch = os.clock()
                 currentArea = (currentArea == 1) and 2 or 1
