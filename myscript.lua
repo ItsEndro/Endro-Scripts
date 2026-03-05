@@ -1,6 +1,6 @@
---[[ 
-    + spaced side buttons & main island side button border = green
-    + walk speed slider at bottom
+--[[ 
+    + spaced side buttons & main island side button border = green
+    + walk speed slider at bottom
 --]]
 
 local player = game.Players.LocalPlayer
@@ -9,12 +9,12 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local theme = {
-    Background = Color3.fromRGB(30, 30, 30),
-    Accent = Color3.fromRGB(26, 148, 255),
-    Success = Color3.fromRGB(61, 179, 98),   -- green for main island border
-    Danger = Color3.fromRGB(170, 37, 46),
-    Text = Color3.new(1, 1, 1),
-    Font = Enum.Font.SourceSansBold
+    Background = Color3.fromRGB(30, 30, 30),
+    Accent = Color3.fromRGB(26, 148, 255),
+    Success = Color3.fromRGB(61, 179, 98),   -- green for main island border
+    Danger = Color3.fromRGB(170, 37, 46),
+    Text = Color3.new(1, 1, 1),
+    Font = Enum.Font.SourceSansBold
 }
 
 local guiParent = (gethui and gethui()) or game:GetService("CoreGui")
@@ -24,27 +24,27 @@ screenGui.ResetOnSpawn = false
 
 -- stable drag logic
 local function makeDraggable(gui)
-    local dragging, dragInput, dragStart, startPos
-    gui.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = gui.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-    gui.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                     startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                     startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
 end
 
 -- Main Frame (wider to fit side buttons with space)
@@ -95,51 +95,51 @@ reopenStroke.Thickness = 2
 reopenStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-    reopenButton.Visible = true
+    mainFrame.Visible = false
+    reopenButton.Visible = true
 end)
 
 reopenButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = true
-    reopenButton.Visible = false
+    mainFrame.Visible = true
+    reopenButton.Visible = false
 end)
 
 -- Button factory (main)
 local function styleButton(text, pos, color)
-    local btn = Instance.new("TextButton", mainFrame)
-    btn.Size = UDim2.new(0, 200, 0, 40)
-    btn.Position = pos
-    btn.Text = text
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.TextColor3 = color
-    btn.Font = theme.Font
-    btn.TextSize = 16
-    btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = color
-    stroke.Thickness = 2
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    return btn
+    local btn = Instance.new("TextButton", mainFrame)
+    btn.Size = UDim2.new(0, 200, 0, 40)
+    btn.Position = pos
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.TextColor3 = color
+    btn.Font = theme.Font
+    btn.TextSize = 16
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = color
+    stroke.Thickness = 2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    return btn
 end
 
 -- Side button factory (small square circular)
 local function styleSideButton(text, pos, color)
-    local btn = Instance.new("TextButton", mainFrame)
-    btn.Size = UDim2.new(0, 40, 0, 40)
-    btn.Position = pos
-    btn.Text = text
-    btn.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
-    btn.TextColor3 = theme.Text
-    btn.Font = theme.Font
-    btn.TextSize = 14
-    btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = color
-    stroke.Thickness = 2
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    return btn
+    local btn = Instance.new("TextButton", mainFrame)
+    btn.Size = UDim2.new(0, 40, 0, 40)
+    btn.Position = pos
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
+    btn.TextColor3 = theme.Text
+    btn.Font = theme.Font
+    btn.TextSize = 14
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = color
+    stroke.Thickness = 2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    return btn
 end
 
 -- Buttons
@@ -153,22 +153,22 @@ local sideMainIsland = styleSideButton("MI", UDim2.new(1, -60, 0, 95), theme.Suc
 
 -- Glow system (behind buttons)
 local function createGlow(button, color)
-    local glowFrame = Instance.new("Frame", button)
-    glowFrame.Size = UDim2.new(1, 12, 1, 12)
-    glowFrame.Position = UDim2.new(0, -6, 0, -6)
-    glowFrame.BackgroundTransparency = 1
-    glowFrame.ZIndex = button.ZIndex - 1
-    Instance.new("UICorner", glowFrame).CornerRadius = UDim.new(0, 10)
-    local outer = Instance.new("UIStroke", glowFrame)
-    outer.Thickness = 10
-    outer.Transparency = 1
-    outer.Color = color
-    local inner = Instance.new("UIStroke", glowFrame)
-    inner.Thickness = 4
-    inner.Transparency = 1
-    inner.Color = color
-    local grad = Instance.new("UIGradient", glowFrame)
-    return {frame = glowFrame, outer = outer, inner = inner, grad = grad, tweens = {}}
+    local glowFrame = Instance.new("Frame", button)
+    glowFrame.Size = UDim2.new(1, 12, 1, 12)
+    glowFrame.Position = UDim2.new(0, -6, 0, -6)
+    glowFrame.BackgroundTransparency = 1
+    glowFrame.ZIndex = button.ZIndex - 1
+    Instance.new("UICorner", glowFrame).CornerRadius = UDim.new(0, 10)
+    local outer = Instance.new("UIStroke", glowFrame)
+    outer.Thickness = 10
+    outer.Transparency = 1
+    outer.Color = color
+    local inner = Instance.new("UIStroke", glowFrame)
+    inner.Thickness = 4
+    inner.Transparency = 1
+    inner.Color = color
+    local grad = Instance.new("UIGradient", glowFrame)
+    return {frame = glowFrame, outer = outer, inner = inner, grad = grad, tweens = {}}
 end
 
 local glowTP = createGlow(tpButton, Color3.new(1,1,1))
@@ -176,48 +176,48 @@ local glowAll = createGlow(autoAnyButton, theme.Danger)
 local glow2K = createGlow(autoButton, theme.Danger)
 
 local function startGlow(glow)
-    for _, t in ipairs(glow.tweens) do t:Cancel() end
-    glow.tweens = {
-        TweenService:Create(glow.outer, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.65}),
-        TweenService:Create(glow.inner, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0}),
-        TweenService:Create(glow.grad, TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
-    }
-    for _, t in ipairs(glow.tweens) do t:Play() end
+    for _, t in ipairs(glow.tweens) do t:Cancel() end
+    glow.tweens = {
+        TweenService:Create(glow.outer, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.65}),
+        TweenService:Create(glow.inner, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0}),
+        TweenService:Create(glow.grad, TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
+    }
+    for _, t in ipairs(glow.tweens) do t:Play() end
 end
 
 local function stopGlow(glow)
-    for _, t in ipairs(glow.tweens) do t:Cancel() end
-    glow.tweens = {}
-    glow.outer.Transparency = 1
-    glow.inner.Transparency = 1
-    glow.grad.Rotation = 0
+    for _, t in ipairs(glow.tweens) do t:Cancel() end
+    glow.tweens = {}
+    glow.outer.Transparency = 1
+    glow.inner.Transparency = 1
+    glow.grad.Rotation = 0
 end
 
 -- Pet finders
 local function findStrongestPetAny()
-    local strongest, max = nil, 0
-    for _, obj in pairs(CollectionService:GetTagged("Roaming")) do
-        local s = obj:GetAttribute("Strength")
-        local o = obj:GetAttribute("OwnerId")
-        if s and (not o or o == 0) and s > max then
-            max = s
-            strongest = obj
-        end
-    end
-    return strongest
+    local strongest, max = nil, 0
+    for _, obj in pairs(CollectionService:GetTagged("Roaming")) do
+        local s = obj:GetAttribute("Strength")
+        local o = obj:GetAttribute("OwnerId")
+        if s and (not o or o == 0) and s > max then
+            max = s
+            strongest = obj
+        end
+    end
+    return strongest
 end
 
 local function findStrongestPet3K()
-    local strongest, max = nil, 2900
-    for _, obj in pairs(CollectionService:GetTagged("Roaming")) do
-        local s = obj:GetAttribute("Strength")
-        local o = obj:GetAttribute("OwnerId")
-        if s and s >= 2900 and (not o or o == 0) and s > max then
-            max = s
-            strongest = obj
-        end
-    end
-    return strongest
+    local strongest, max = nil, 2900
+    for _, obj in pairs(CollectionService:GetTagged("Roaming")) do
+        local s = obj:GetAttribute("Strength")
+        local o = obj:GetAttribute("OwnerId")
+        if s and s >= 2900 and (not o or o == 0) and s > max then
+            max = s
+            strongest = obj
+        end
+    end
+    return strongest
 end
 
 -- ISLAND POSITIONS
@@ -226,54 +226,54 @@ local mainIsland = CFrame.new(-105.803, 830.677, -2745.03)
 
 -- Teleport buttons handlers
 tpButton.MouseButton1Click:Connect(function()
-    local pet = findStrongestPetAny()
-    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if pet and root then
-        startGlow(glowTP)
-        root.CFrame = pet:GetPivot() + Vector3.new(0,5,0)
-        task.delay(3, function() stopGlow(glowTP) end)
-    end
+    local pet = findStrongestPetAny()
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if pet and root then
+        startGlow(glowTP)
+        root.CFrame = pet:GetPivot() + Vector3.new(0,5,0)
+        task.delay(3, function() stopGlow(glowTP) end)
+    end
 end)
 
 local autoModeAll = false
 autoAnyButton.MouseButton1Click:Connect(function()
-    autoModeAll = not autoModeAll
-    autoAnyButton.Text = "Auto Teleport (All): " .. (autoModeAll and "ON" or "OFF")
-    if autoModeAll then
-        startGlow(glowAll)
-        autoAnyButton.UIStroke.Color = Color3.new(1,1,1)
-        autoAnyButton.TextColor3 = Color3.new(1,1,1)
-    else
-        stopGlow(glowAll)
-        autoAnyButton.UIStroke.Color = theme.Danger
-        autoAnyButton.TextColor3 = theme.Danger
-    end
+    autoModeAll = not autoModeAll
+    autoAnyButton.Text = "Auto Teleport (All): " .. (autoModeAll and "ON" or "OFF")
+    if autoModeAll then
+        startGlow(glowAll)
+        autoAnyButton.UIStroke.Color = Color3.new(1,1,1)
+        autoAnyButton.TextColor3 = Color3.new(1,1,1)
+    else
+        stopGlow(glowAll)
+        autoAnyButton.UIStroke.Color = theme.Danger
+        autoAnyButton.TextColor3 = theme.Danger
+    end
 end)
 
 local autoMode3K = false
 autoButton.MouseButton1Click:Connect(function()
-    autoMode3K = not autoMode3K
-    autoButton.Text = "Auto Teleport 3K: " .. (autoMode3K and "ON" or "OFF")
-    if autoMode3K then
-        startGlow(glow2K)
-        autoButton.UIStroke.Color = Color3.new(1,1,1)
-        autoButton.TextColor3 = Color3.new(1,1,1)
-    else
-        stopGlow(glow2K)
-        autoButton.UIStroke.Color = theme.Danger
-        autoButton.TextColor3 = theme.Danger
-    end
+    autoMode3K = not autoMode3K
+    autoButton.Text = "Auto Teleport 3K: " .. (autoMode3K and "ON" or "OFF")
+    if autoMode3K then
+        startGlow(glow2K)
+        autoButton.UIStroke.Color = Color3.new(1,1,1)
+        autoButton.TextColor3 = Color3.new(1,1,1)
+    else
+        stopGlow(glow2K)
+        autoButton.UIStroke.Color = theme.Danger
+        autoButton.TextColor3 = theme.Danger
+    end
 end)
 
 -- Side buttons
 sideUnderwater.MouseButton1Click:Connect(function()
-    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if root then root.CFrame = underwater end
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if root then root.CFrame = underwater end
 end)
 
 sideMainIsland.MouseButton1Click:Connect(function()
-    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if root then root.CFrame = mainIsland end
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if root then root.CFrame = mainIsland end
 end)
 
 -- WalkSpeed slider at bottom
@@ -300,60 +300,68 @@ knob.AutoButtonColor = false
 local dragging = false
 knob.MouseButton1Down:Connect(function() dragging = true end)
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local relX = math.clamp(input.Position.X - sliderFrame.AbsolutePosition.X - 10, 0, sliderBar.AbsoluteSize.X)
-        knob.Position = UDim2.new(0, relX, 0, 0)
-        local speed = 30 + (relX/sliderBar.AbsoluteSize.X)*(200-30)
-        local char = player.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = speed end
-    end
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relX = math.clamp(input.Position.X - sliderFrame.AbsolutePosition.X - 10, 0, sliderBar.AbsoluteSize.X)
+        knob.Position = UDim2.new(0, relX, 0, 0)
+        local speed = 30 + (relX/sliderBar.AbsoluteSize.X)*(200-30)
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = speed end
+    end
 end)
 
 -- Main loop (auto teleport + island switching)
 task.spawn(function()
-    local currentArea = 1
-    local lastAreaSwitch = os.clock()
-    local petsStartTime = 0
-    local waitingForLoad = false
+    local lastUnderwaterTP = 0
+    local savedPosition = nil
+    local returning = false
 
-    while true do
-        task.wait(0.5)
-        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not root then continue end
+    while true do
+        task.wait(0.5)
 
-        if autoMode3K or autoModeAll then
-            if os.clock() - lastAreaSwitch >= 60 then
-                lastAreaSwitch = os.clock()
-                currentArea = (currentArea == 1) and 2 or 1
-                root.CFrame = (currentArea == 1) and underwater or mainIsland
-                petsStartTime = os.clock()
-                waitingForLoad = true
-            end
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
 
-            if waitingForLoad then
-                if os.clock() - petsStartTime >= 2 then
-                    waitingForLoad = false
-                else
-                    continue
-                end
-            end
-        end
+        -- If any auto TP is enabled, do underwater cycle every 60s
+        if (autoMode3K or autoModeAll) and not returning then
+            if os.clock() - lastUnderwaterTP >= 60 then
+                lastUnderwaterTP = os.clock()
 
-        if autoMode3K then
-            local pet = findStrongestPet3K()
-            if pet then root.CFrame = pet:GetPivot() + Vector3.new(0,5,0) end
-        end
+                -- Save current position
+                savedPosition = root.CFrame
 
-        if autoModeAll then
-            local pet = findStrongestPetAny()
-            if pet then root.CFrame = pet:GetPivot() + Vector3.new(0,5,0) end
-        end
-    end
+                -- TP to underwater
+                root.CFrame = underwater
+                returning = true
 
+                -- TP back after 3 seconds
+                task.delay(3, function()
+                    local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if r and savedPosition then
+                        r.CFrame = savedPosition
+                    end
+                    returning = false
+                end)
+            end
+        end
+
+        -- Auto 3K pet TP
+        if autoMode3K and not returning then
+            local pet = findStrongestPet3K()
+            if pet then
+                root.CFrame = pet:GetPivot() + Vector3.new(0,5,0)
+            end
+        end
+
+        -- Auto any pet TP
+        if autoModeAll and not returning then
+            local pet = findStrongestPetAny()
+            if pet then
+                root.CFrame = pet:GetPivot() + Vector3.new(0,5,0)
+            end
+        end
+    end
 end)
-
-
