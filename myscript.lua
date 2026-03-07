@@ -28,16 +28,13 @@ local theme = {
 
 -- Dictionary to store active weathers 
 local TargetWeathers = {}
-local weatherDisplayNames = {["Rain"] = "Rain",
+local weatherDisplayNames = 
+    {["Rain"] = "Rain",
     ["Thunderstorm"] = "Thunderstorm",
-    ["Snowy"] = "Snowy",
-    ["Valentines"] = "Valentines",
     ["AuroraBorealis"] = "Aurora",
     ["CosmicShower"] = "Cosmic Shower",
     ["Eruption"] = "Volcano",
     ["Underwater"] = "Underwater",
-    ["Gravebound"] = "Gravebound",
-    ["Blizzard"] = "Blizzard",
     ["Sandstorm"] = "Sandstorm"
 }
 -- Initialize all to true by default
@@ -593,3 +590,4 @@ task.spawn(function()
         end
     end
 end)
+
