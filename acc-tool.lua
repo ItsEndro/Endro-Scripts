@@ -3,6 +3,7 @@ local SoundService = game:GetService("SoundService")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Clean up old GUI if re-executing
@@ -19,6 +20,7 @@ local COLORS = {
     AutoBuy = Color3.fromRGB(200, 100, 100)
 }
 
+-- The order of this array is VERY important as it maps directly to the Pack ID (e.g. Titan is 11)
 local PACKS = {
     "Pirate", "Ninja", "Soul", "Slayer", "Sorcerer", "Dragon", "Fire", "Hero", "Hunter",
     "Solo", "Titan", "Chainsaw", "Flight", "Ego", "Clover", "Ghoul", "Geass", "Bizarre",
@@ -27,12 +29,29 @@ local PACKS = {
 
 local toggles = {}
 local selectedPacks = {}
+local selectedAutoBuyPacks = {}
+
+-- ==========================================
+-- CONFIG LOAD SYSTEM
+-- ==========================================
+local configName = "MutationTrackerConfig.json"
+
+if isfile and isfile(configName) and readfile then
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(readfile(configName))
+    end)
+    if success and type(result) == "table" then
+        if result.toggles then toggles = result.toggles end
+        if result.selectedPacks then selectedPacks = result.selectedPacks end
+        if result.selectedAutoBuyPacks then selectedAutoBuyPacks = result.selectedAutoBuyPacks end
+    end
+end
+
 local notifiedObjects = {}
 local activeTokens = {}
-local knownPacks = {} -- Stores active conveyor packs: [Model] = { id = "11-1", type = "Titan" }
+local knownPacks = {}
 local lastMerchantAlert = 0
 local minimized = false
-local selectedAutoBuyPacks = {} -- {[packName] = true/nil }
 
 -- Cache the Card remote
 local CardRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Card")
@@ -104,17 +123,21 @@ Instance.new("UICorner", MinimizeBtn)
 
 local yPos = 40
 local function CreateToggle(name, color, defaultState)
-    toggles[name] = defaultState
+    -- Use loaded state if available, else default
+    if toggles[name] == nil then toggles[name] = defaultState end
+    local state = toggles[name]
+
     local btn = Instance.new("TextButton", Main)
     btn.Name = "Toggle_" .. name
     btn.Size = UDim2.new(0.9, 0, 0, 30)
     btn.Position = UDim2.new(0.05, 0, 0, yPos)
     btn.BackgroundColor3 = color
-    btn.Text = name .. (defaultState and ": ON" or ": OFF")
+    btn.Text = name .. (state and ": ON" or ": OFF")
     btn.Font = Enum.Font.GothamBold
     btn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    btn.BackgroundTransparency = defaultState and 0 or 0.7
+    btn.BackgroundTransparency = state and 0 or 0.7
     Instance.new("UICorner", btn)
+    
     btn.MouseButton1Click:Connect(function()
         toggles[name] = not toggles[name]
         btn.Text = name .. (toggles[name] and ": ON" or ": OFF")
@@ -160,6 +183,46 @@ AutoBuySelectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", AutoBuySelectBtn)
 yPos = yPos + 35
 
+-- Save Config Button
+local SaveBtn = Instance.new("TextButton", Main)
+SaveBtn.Name = "SaveBtn"
+SaveBtn.Size = UDim2.new(0.9, 0, 0, 30)
+SaveBtn.Position = UDim2.new(0.05, 0, 0, yPos)
+SaveBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+SaveBtn.Text = "Save Config"
+SaveBtn.Font = Enum.Font.GothamBold
+SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", SaveBtn)
+yPos = yPos + 35
+
+-- Save Functionality
+SaveBtn.MouseButton1Click:Connect(function()
+    if writefile then
+        local data = {
+            toggles = toggles,
+            selectedPacks = selectedPacks,
+            selectedAutoBuyPacks = selectedAutoBuyPacks
+        }
+        local success = pcall(function()
+            writefile(configName, HttpService:JSONEncode(data))
+        end)
+        if success then
+            SaveBtn.Text = "Saved successfully!"
+            SaveBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        else
+            SaveBtn.Text = "Error Saving!"
+            SaveBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        end
+    else
+        SaveBtn.Text = "Not Supported by Executor!"
+        SaveBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    end
+    task.delay(1.5, function() 
+        SaveBtn.Text = "Save Config" 
+        SaveBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    end)
+end)
+
 -- ==========================================
 -- TRACKER FILTER DROPDOWN
 -- ==========================================
@@ -173,17 +236,20 @@ Instance.new("UICorner", DropdownFrame)
 Instance.new("UIListLayout", DropdownFrame).SortOrder = Enum.SortOrder.LayoutOrder
 
 for _, packName in ipairs(PACKS) do
+    local isSelected = selectedPacks[packName]
+    
     local PackBtn = Instance.new("TextButton", DropdownFrame)
     PackBtn.Size = UDim2.new(1, 0, 0, 25)
     PackBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    PackBtn.Text = "[ ] " .. packName
-    PackBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    PackBtn.Text = (isSelected and "[X] " or "  [ ] ") .. packName
+    PackBtn.TextColor3 = isSelected and Color3.new(0.2, 1, 0.2) or Color3.new(0.8, 0.8, 0.8)
     PackBtn.Font = Enum.Font.GothamSemibold
     PackBtn.TextXAlignment = Enum.TextXAlignment.Left
+    
     PackBtn.MouseButton1Click:Connect(function()
         if selectedPacks[packName] then
             selectedPacks[packName] = nil
-            PackBtn.Text = "[ ] " .. packName
+            PackBtn.Text = "  [ ] " .. packName
             PackBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
         else
             selectedPacks[packName] = true
@@ -215,6 +281,8 @@ local function updateAutoBuyBtn()
 end
 
 for _, packName in ipairs(PACKS) do
+    local isSelected = selectedAutoBuyPacks[packName]
+    
     local Row = Instance.new("Frame", AutoBuyDropdown)
     Row.Size = UDim2.new(1, 0, 0, 30)
     Row.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -224,8 +292,8 @@ for _, packName in ipairs(PACKS) do
     SelectBtn.Size = UDim2.new(1, 0, 1, 0)
     SelectBtn.Position = UDim2.new(0, 0, 0, 0)
     SelectBtn.BackgroundTransparency = 1
-    SelectBtn.Text = "  [ ] " .. packName
-    SelectBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    SelectBtn.Text = (isSelected and "[X] " or "  [ ] ") .. packName
+    SelectBtn.TextColor3 = isSelected and Color3.new(0.2, 1, 0.2) or Color3.new(0.8, 0.8, 0.8)
     SelectBtn.Font = Enum.Font.GothamSemibold
     SelectBtn.TextXAlignment = Enum.TextXAlignment.Left
     SelectBtn.TextSize = 14
@@ -244,6 +312,7 @@ for _, packName in ipairs(PACKS) do
     end)
 end
 AutoBuyDropdown.CanvasSize = UDim2.new(0, 0, 0, #PACKS * 30)
+updateAutoBuyBtn() -- update default display immediately if values were loaded
 
 -- Dropdown toggle logic
 FilterBtn.MouseButton1Click:Connect(function()
