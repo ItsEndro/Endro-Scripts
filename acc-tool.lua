@@ -20,6 +20,19 @@ local COLORS = {
     AutoBuy = Color3.fromRGB(200, 100, 100)
 }
 
+-- Exact mutation colors for internal Auto-Buy detection
+local MUTATION_COLORS = {
+    Gold = Color3.fromRGB(255, 238, 2),
+    Emerald = Color3.fromRGB(10, 255, 79),
+    Void = Color3.fromRGB(103, 6, 248),
+    Diamond = Color3.fromRGB(6, 248, 248),
+    Rainbow = Color3.fromRGB(192, 2, 255)
+}
+
+local ALL_MUTATIONS = {
+    "Regular", "Gold", "Emerald", "Void", "Diamond", "Rainbow"
+}
+
 -- The order of this array is VERY important as it maps directly to the Pack ID (e.g. Titan is 11)
 local PACKS = {
     "Pirate", "Ninja", "Soul", "Slayer", "Sorcerer", "Dragon", "Fire", "Hero", "Hunter",
@@ -30,6 +43,7 @@ local PACKS = {
 local toggles = {}
 local selectedPacks = {}
 local selectedAutoBuyPacks = {}
+local selectedAutoBuyMutations = {}
 
 -- ==========================================
 -- CONFIG LOAD SYSTEM
@@ -44,6 +58,7 @@ if isfile and isfile(configName) and readfile then
         if result.toggles then toggles = result.toggles end
         if result.selectedPacks then selectedPacks = result.selectedPacks end
         if result.selectedAutoBuyPacks then selectedAutoBuyPacks = result.selectedAutoBuyPacks end
+        if result.selectedAutoBuyMutations then selectedAutoBuyMutations = result.selectedAutoBuyMutations end
     end
 end
 
@@ -123,7 +138,6 @@ Instance.new("UICorner", MinimizeBtn)
 
 local yPos = 40
 local function CreateToggle(name, color, defaultState)
-    -- Use loaded state if available, else default
     if toggles[name] == nil then toggles[name] = defaultState end
     local state = toggles[name]
 
@@ -177,10 +191,22 @@ AutoBuySelectBtn.Name = "AutoBuySelectBtn"
 AutoBuySelectBtn.Size = UDim2.new(0.9, 0, 0, 30)
 AutoBuySelectBtn.Position = UDim2.new(0.05, 0, 0, yPos)
 AutoBuySelectBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-AutoBuySelectBtn.Text = "Auto Buy: None ▼"
+AutoBuySelectBtn.Text = "Auto Buy Packs ▼"
 AutoBuySelectBtn.Font = Enum.Font.GothamBold
 AutoBuySelectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", AutoBuySelectBtn)
+yPos = yPos + 35
+
+-- Auto Buy Mutation Select Button
+local AutoBuyMutationBtn = Instance.new("TextButton", Main)
+AutoBuyMutationBtn.Name = "AutoBuyMutationBtn"
+AutoBuyMutationBtn.Size = UDim2.new(0.9, 0, 0, 30)
+AutoBuyMutationBtn.Position = UDim2.new(0.05, 0, 0, yPos)
+AutoBuyMutationBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+AutoBuyMutationBtn.Text = "Auto Buy Muts ▼"
+AutoBuyMutationBtn.Font = Enum.Font.GothamBold
+AutoBuyMutationBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", AutoBuyMutationBtn)
 yPos = yPos + 35
 
 -- Save Config Button
@@ -201,7 +227,8 @@ SaveBtn.MouseButton1Click:Connect(function()
         local data = {
             toggles = toggles,
             selectedPacks = selectedPacks,
-            selectedAutoBuyPacks = selectedAutoBuyPacks
+            selectedAutoBuyPacks = selectedAutoBuyPacks,
+            selectedAutoBuyMutations = selectedAutoBuyMutations
         }
         local success = pcall(function()
             writefile(configName, HttpService:JSONEncode(data))
@@ -214,7 +241,7 @@ SaveBtn.MouseButton1Click:Connect(function()
             SaveBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
         end
     else
-        SaveBtn.Text = "Not Supported by Executor!"
+        SaveBtn.Text = "Not Supported!"
         SaveBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     end
     task.delay(1.5, function() 
@@ -224,106 +251,82 @@ SaveBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
--- TRACKER FILTER DROPDOWN
+-- DROPDOWN FRAMES
 -- ==========================================
-local DropdownFrame = Instance.new("ScrollingFrame", Main)
-DropdownFrame.Size = UDim2.new(0, 150, 0, 200)
-DropdownFrame.Position = UDim2.new(1, 5, 0, 0)
-DropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-DropdownFrame.ScrollBarThickness = 4
-DropdownFrame.Visible = false
-Instance.new("UICorner", DropdownFrame)
-Instance.new("UIListLayout", DropdownFrame).SortOrder = Enum.SortOrder.LayoutOrder
+local function CreateDropdown(parent, yOffset, sizeY, list, stateTable, updateLabelFunc)
+    local Frame = Instance.new("ScrollingFrame", parent)
+    Frame.Size = UDim2.new(0, 150, 0, sizeY)
+    Frame.Position = UDim2.new(1, 5, 0, yOffset)
+    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Frame.ScrollBarThickness = 4
+    Frame.Visible = false
+    Instance.new("UICorner", Frame)
 
-for _, packName in ipairs(PACKS) do
-    local isSelected = selectedPacks[packName]
-    
-    local PackBtn = Instance.new("TextButton", DropdownFrame)
-    PackBtn.Size = UDim2.new(1, 0, 0, 25)
-    PackBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    PackBtn.Text = (isSelected and "[X] " or "  [ ] ") .. packName
-    PackBtn.TextColor3 = isSelected and Color3.new(0.2, 1, 0.2) or Color3.new(0.8, 0.8, 0.8)
-    PackBtn.Font = Enum.Font.GothamSemibold
-    PackBtn.TextXAlignment = Enum.TextXAlignment.Left
-    
-    PackBtn.MouseButton1Click:Connect(function()
-        if selectedPacks[packName] then
-            selectedPacks[packName] = nil
-            PackBtn.Text = "  [ ] " .. packName
-            PackBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-        else
-            selectedPacks[packName] = true
-            PackBtn.Text = "[X] " .. packName
-            PackBtn.TextColor3 = Color3.new(0.2, 1, 0.2)
-        end
-    end)
+    local Layout = Instance.new("UIListLayout", Frame)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    for _, itemName in ipairs(list) do
+        local isSelected = stateTable[itemName]
+        
+        local Row = Instance.new("Frame", Frame)
+        Row.Size = UDim2.new(1, 0, 0, 30)
+        Row.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Row.BorderSizePixel = 0
+
+        local SelectBtn = Instance.new("TextButton", Row)
+        SelectBtn.Size = UDim2.new(1, 0, 1, 0)
+        SelectBtn.BackgroundTransparency = 1
+        SelectBtn.Text = (isSelected and "[X] " or "  [ ] ") .. itemName
+        SelectBtn.TextColor3 = isSelected and Color3.new(0.2, 1, 0.2) or Color3.new(0.8, 0.8, 0.8)
+        SelectBtn.Font = Enum.Font.GothamSemibold
+        SelectBtn.TextXAlignment = Enum.TextXAlignment.Left
+        SelectBtn.TextSize = 14
+
+        SelectBtn.MouseButton1Click:Connect(function()
+            if stateTable[itemName] then
+                stateTable[itemName] = nil
+                SelectBtn.Text = "  [ ] " .. itemName
+                SelectBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+            else
+                stateTable[itemName] = true
+                SelectBtn.Text = "[X] " .. itemName
+                SelectBtn.TextColor3 = Color3.new(0.2, 1, 0.2)
+            end
+            if updateLabelFunc then updateLabelFunc() end
+        end)
+    end
+    Frame.CanvasSize = UDim2.new(0, 0, 0, #list * 30)
+    return Frame
 end
-DropdownFrame.CanvasSize = UDim2.new(0, 0, 0, #PACKS * 25)
 
--- ==========================================
--- AUTO BUY DROPDOWN
--- ==========================================
-local AutoBuyDropdown = Instance.new("ScrollingFrame", Main)
-AutoBuyDropdown.Size = UDim2.new(0, 150, 0, 220)
-AutoBuyDropdown.Position = UDim2.new(1, 5, 0, 40)
-AutoBuyDropdown.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-AutoBuyDropdown.ScrollBarThickness = 4
-AutoBuyDropdown.Visible = false
-Instance.new("UICorner", AutoBuyDropdown)
-
-local AutoBuyListLayout = Instance.new("UIListLayout", AutoBuyDropdown)
-AutoBuyListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local DropdownFrame = CreateDropdown(Main, 0, 200, PACKS, selectedPacks, nil)
 
 local function updateAutoBuyBtn()
     local count = 0
     for _ in pairs(selectedAutoBuyPacks) do count += 1 end
-    AutoBuySelectBtn.Text = count == 0 and "Auto Buy: None ▼" or ("Auto Buy: " .. count .. " Pack(s) ▼")
+    AutoBuySelectBtn.Text = count == 0 and "Auto Buy Packs: 0 ▼" or ("Auto Buy Packs: " .. count .. " ▼")
 end
+local AutoBuyDropdown = CreateDropdown(Main, 40, 220, PACKS, selectedAutoBuyPacks, updateAutoBuyBtn)
+updateAutoBuyBtn()
 
-for _, packName in ipairs(PACKS) do
-    local isSelected = selectedAutoBuyPacks[packName]
-    
-    local Row = Instance.new("Frame", AutoBuyDropdown)
-    Row.Size = UDim2.new(1, 0, 0, 30)
-    Row.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Row.BorderSizePixel = 0
-
-    local SelectBtn = Instance.new("TextButton", Row)
-    SelectBtn.Size = UDim2.new(1, 0, 1, 0)
-    SelectBtn.Position = UDim2.new(0, 0, 0, 0)
-    SelectBtn.BackgroundTransparency = 1
-    SelectBtn.Text = (isSelected and "[X] " or "  [ ] ") .. packName
-    SelectBtn.TextColor3 = isSelected and Color3.new(0.2, 1, 0.2) or Color3.new(0.8, 0.8, 0.8)
-    SelectBtn.Font = Enum.Font.GothamSemibold
-    SelectBtn.TextXAlignment = Enum.TextXAlignment.Left
-    SelectBtn.TextSize = 14
-
-    SelectBtn.MouseButton1Click:Connect(function()
-        if selectedAutoBuyPacks[packName] then
-            selectedAutoBuyPacks[packName] = nil
-            SelectBtn.Text = "  [ ] " .. packName
-            SelectBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-        else
-            selectedAutoBuyPacks[packName] = true
-            SelectBtn.Text = "[X] " .. packName
-            SelectBtn.TextColor3 = Color3.new(0.2, 1, 0.2)
-        end
-        updateAutoBuyBtn()
-    end)
+local function updateAutoBuyMutBtn()
+    local count = 0
+    for _ in pairs(selectedAutoBuyMutations) do count += 1 end
+    AutoBuyMutationBtn.Text = count == 0 and "Auto Buy Muts: Any ▼" or ("Auto Buy Muts: " .. count .. " ▼")
 end
-AutoBuyDropdown.CanvasSize = UDim2.new(0, 0, 0, #PACKS * 30)
-updateAutoBuyBtn() -- update default display immediately if values were loaded
+local AutoBuyMutDropdown = CreateDropdown(Main, 80, 180, ALL_MUTATIONS, selectedAutoBuyMutations, updateAutoBuyMutBtn)
+updateAutoBuyMutBtn()
 
 -- Dropdown toggle logic
-FilterBtn.MouseButton1Click:Connect(function()
-    DropdownFrame.Visible = not DropdownFrame.Visible
-    if DropdownFrame.Visible then AutoBuyDropdown.Visible = false end
-end)
+local function toggleDropdown(showDropdown)
+    DropdownFrame.Visible = (showDropdown == DropdownFrame and not DropdownFrame.Visible)
+    AutoBuyDropdown.Visible = (showDropdown == AutoBuyDropdown and not AutoBuyDropdown.Visible)
+    AutoBuyMutDropdown.Visible = (showDropdown == AutoBuyMutDropdown and not AutoBuyMutDropdown.Visible)
+end
 
-AutoBuySelectBtn.MouseButton1Click:Connect(function()
-    AutoBuyDropdown.Visible = not AutoBuyDropdown.Visible
-    if AutoBuyDropdown.Visible then DropdownFrame.Visible = false end
-end)
+FilterBtn.MouseButton1Click:Connect(function() toggleDropdown(DropdownFrame) end)
+AutoBuySelectBtn.MouseButton1Click:Connect(function() toggleDropdown(AutoBuyDropdown) end)
+AutoBuyMutationBtn.MouseButton1Click:Connect(function() toggleDropdown(AutoBuyMutDropdown) end)
 
 local originalHeight = yPos + 5
 Main.Size = UDim2.new(0, 180, 0, originalHeight)
@@ -336,15 +339,12 @@ MinimizeBtn.MouseButton1Click:Connect(function()
             child.Visible = not minimized
         end
     end
-    if minimized then
-        DropdownFrame.Visible = false
-        AutoBuyDropdown.Visible = false
-    end
+    if minimized then toggleDropdown(nil) end
     Main.Size = minimized and UDim2.new(0, 180, 0, 35) or UDim2.new(0, 180, 0, originalHeight)
 end)
 
 -- ==========================================
--- 5. PACK CATALOGING (Finds exact conveyor IDs)
+-- 5. PACK CATALOGING (Finds exact conveyor IDs & Mutations)
 -- ==========================================
 local function RegisterConveyorPack(obj)
     pcall(function()
@@ -366,36 +366,61 @@ local function RegisterConveyorPack(obj)
         if not packID then return end
         
         local foundPackName = nil
+        local foundMutation = "Regular"
         
-        -- Helper function to find the pack name from text
+        -- Helper function to find the pack name
         local function checkText(text)
             text = text:lower()
             for _, pName in ipairs(PACKS) do
-                if text:find(pName:lower()) then
-                    return pName
-                end
+                if text:find(pName:lower()) then return pName end
             end
             return nil
         end
         
-        -- Check this specific object's text
-        if obj:IsA("TextLabel") or obj:IsA("TextBox") then
-            foundPackName = checkText(obj.Text)
+        -- Helper function to find mutation
+        local function checkMut(o)
+            local text = (o:IsA("TextLabel") or o:IsA("TextBox")) and o.Text:lower() or ""
+            local color = (o:IsA("TextLabel") or o:IsA("TextBox")) and o.TextColor3 or nil
+            
+            for mutName, tColor in pairs(MUTATION_COLORS) do
+                if text:find(mutName:lower()) then return mutName end
+                if color == tColor then return mutName end
+                local grad = o:FindFirstChildOfClass("UIGradient")
+                if grad and grad.Name:lower():find(mutName:lower()) then return mutName end
+            end
+            return nil
         end
         
-        -- Deep search inside the packRoot if not found immediately
-        if not foundPackName then
+        -- Check this specific object
+        if obj:IsA("TextLabel") or obj:IsA("TextBox") then
+            foundPackName = checkText(obj.Text)
+            local m = checkMut(obj)
+            if m then foundMutation = m end
+        end
+        
+        -- Deep search inside the packRoot if missing details
+        if not foundPackName or foundMutation == "Regular" then
             for _, desc in ipairs(packRoot:GetDescendants()) do
                 if desc:IsA("TextLabel") or desc:IsA("TextBox") then
-                    foundPackName = checkText(desc.Text)
-                    if foundPackName then break end
+                    if not foundPackName then foundPackName = checkText(desc.Text) end
+                    if foundMutation == "Regular" then
+                        local m = checkMut(desc)
+                        if m then foundMutation = m end
+                    end
                 end
             end
         end
         
         -- Save it to active cache
         if foundPackName then
-            knownPacks[packRoot] = { id = packID, type = foundPackName }
+            -- If we already have this pack recorded but suddenly found its mutation, update it
+            if knownPacks[packRoot] then
+                if knownPacks[packRoot].mutation == "Regular" and foundMutation ~= "Regular" then
+                    knownPacks[packRoot].mutation = foundMutation
+                end
+            else
+                knownPacks[packRoot] = { id = packID, type = foundPackName, mutation = foundMutation }
+            end
         end
     end)
 end
@@ -414,11 +439,20 @@ task.spawn(function()
                 continue
             end
             
-            -- If this pack type is checked in our Auto Buy menu, send the exact ID
+            -- Check Pack Filter
             if selectedAutoBuyPacks[data.type] then
-                pcall(function()
-                    CardRemote:FireServer("BuyPack", data.id)
-                end)
+                
+                -- Check Mutation Filter (Empty array = allow ALL mutations)
+                local passMutationFilter = true
+                if next(selectedAutoBuyMutations) ~= nil then
+                    passMutationFilter = (selectedAutoBuyMutations[data.mutation] == true)
+                end
+                
+                if passMutationFilter then
+                    pcall(function()
+                        CardRemote:FireServer("BuyPack", data.id)
+                    end)
+                end
             end
         end
     end
@@ -441,8 +475,8 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 8. SMART DETECTION LOGIC
-local function CheckMutation(obj, isInitialScan)
+-- 8. SMART DETECTION LOGIC (Tracker Alerts)
+local function CheckMutationAlerts(obj, isInitialScan)
     pcall(function()
         if not obj or not obj.Parent then return end
         local packRoot = obj:FindFirstAncestorOfClass("Model") or obj:FindFirstAncestorOfClass("BasePart")
@@ -458,33 +492,23 @@ local function CheckMutation(obj, isInitialScan)
 
         for mutation, targetColor in pairs(COLORS) do
             if mutation ~= "Merchant" and mutation ~= "Tokens" and mutation ~= "AutoBuy" and toggles[mutation] then
-                if text:find(mutation:lower()) then
-                    foundMutation = mutation; break
-                end
-                if color == targetColor then
-                    foundMutation = mutation; break
-                end
+                if text:find(mutation:lower()) then foundMutation = mutation; break end
+                if color == targetColor then foundMutation = mutation; break end
                 local gradient = obj:FindFirstChildOfClass("UIGradient")
-                if gradient and gradient.Name:lower():find(mutation:lower()) then
-                    foundMutation = mutation; break
-                end
+                if gradient and gradient.Name:lower():find(mutation:lower()) then foundMutation = mutation; break end
             end
         end
 
         if foundMutation then
             local foundPackName = "Unknown"
             for _, pName in ipairs(PACKS) do
-                if packRoot.Name:lower():find(pName:lower()) then
-                    foundPackName = pName; break
-                end
+                if packRoot.Name:lower():find(pName:lower()) then foundPackName = pName; break end
             end
             if foundPackName == "Unknown" then
                 for _, desc in ipairs(packRoot:GetDescendants()) do
                     if desc:IsA("TextLabel") or desc:IsA("TextBox") then
                         for _, pName in ipairs(PACKS) do
-                            if desc.Text:lower():find(pName:lower()) then
-                                foundPackName = pName; break
-                            end
+                            if desc.Text:lower():find(pName:lower()) then foundPackName = pName; break end
                         end
                         if foundPackName ~= "Unknown" then break end
                     end
@@ -522,12 +546,12 @@ local function SetupListeners(obj, isInitialScan)
     RegisterConveyorPack(obj)
     
     if obj:IsA("TextLabel") or obj:IsA("TextBox") then
-        CheckMutation(obj, isInitialScan)
+        CheckMutationAlerts(obj, isInitialScan)
         obj:GetPropertyChangedSignal("Text"):Connect(function() 
             RegisterConveyorPack(obj)
-            CheckMutation(obj, false) 
+            CheckMutationAlerts(obj, false) 
         end)
-        obj:GetPropertyChangedSignal("TextColor3"):Connect(function() CheckMutation(obj, false) end)
+        obj:GetPropertyChangedSignal("TextColor3"):Connect(function() CheckMutationAlerts(obj, false) end)
     elseif obj:IsA("Model") and obj.Name:lower():match("merchant") then
         if toggles.Merchant and not notifiedObjects[obj] then
             notifiedObjects[obj] = true
